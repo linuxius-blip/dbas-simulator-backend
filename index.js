@@ -36,20 +36,20 @@ app.get('/', (req, res) => {
   res.json({ status: 'ok', service: 'DBAS Simulator API' });
 });
 
-// Register or retrieve a student
+// Register or retrieve a student (first name + browser session ID only)
 app.post('/api/students', async (req, res) => {
-  const { name, email } = req.body;
-  if (!name || !email) {
-    return res.status(400).json({ error: 'Name and email are required' });
+  const { name, session_id } = req.body;
+  if (!name || !session_id) {
+    return res.status(400).json({ error: 'Name and session_id are required' });
   }
   try {
-    // Upsert: if email exists, return existing student; otherwise create new
+    // Upsert: if session_id exists, return existing student; otherwise create new
     const result = await pool.query(
-      `INSERT INTO students (name, email)
+      `INSERT INTO students (name, session_id)
        VALUES ($1, $2)
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
-       RETURNING id, name, email, created_at`,
-      [name.trim(), email.trim().toLowerCase()]
+       ON CONFLICT (session_id) DO UPDATE SET name = EXCLUDED.name
+       RETURNING id, name, session_id, created_at`,
+      [name.trim(), session_id.trim()]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -134,7 +134,7 @@ app.get('/api/students', async (req, res) => {
 app.get('/api/runs', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT r.*, s.name, s.email
+      `SELECT r.*, s.name, s.session_id
        FROM scenario_runs r
        JOIN students s ON r.student_id = s.id
        ORDER BY s.name, r.scenario`
@@ -151,12 +151,12 @@ app.get('/api/export', async (req, res) => {
   try {
     const students = await pool.query('SELECT * FROM students ORDER BY id');
     const runs = await pool.query(
-      `SELECT r.*, s.name, s.email
+      `SELECT r.*, s.name, s.session_id
        FROM scenario_runs r JOIN students s ON r.student_id = s.id
        ORDER BY s.id, r.scenario`
     );
     const reflections = await pool.query(
-      `SELECT ref.*, s.name, s.email
+      `SELECT ref.*, s.name, s.session_id
        FROM reflections ref JOIN students s ON ref.student_id = s.id
        ORDER BY s.id`
     );

@@ -1,9 +1,14 @@
 -- DBAS Simulator Database Schema
 
+-- Drop old table if schema changed (email → session_id)
+DROP TABLE IF EXISTS reflections CASCADE;
+DROP TABLE IF EXISTS scenario_runs CASCADE;
+DROP TABLE IF EXISTS students CASCADE;
+
 CREATE TABLE IF NOT EXISTS students (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
-  email VARCHAR(255) NOT NULL UNIQUE,
+  session_id VARCHAR(64) NOT NULL UNIQUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
